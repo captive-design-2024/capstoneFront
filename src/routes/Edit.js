@@ -211,7 +211,7 @@ export const Edit = () => {
 
       </div>
 
-      {/* 하단 페이지: 자막 번역 */}
+      {/* 하단 페이지: 자막 번역 ss*/}
       <div className="bg-white mt-4">
         <header className="bg-white text-gray-900 py-4 px-6 text-xl font-bold flex justify-between items-center">
           번역 및 AI 기능
