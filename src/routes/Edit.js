@@ -17,9 +17,10 @@ export const Edit = () => {
   const [translation, settranslation] = useState(''); //번역
   const [selectedLanguage, setSelectedLanguage] = useState(''); // 선택한 언어 저장
 
-  const [getlink, setlink] = useState(''); //유튜브 링크
+  const [getlink, setLink] = useState(''); //유튜브 링크
 
-  const { projectId } = useParams(); // URL에서 projectId 추출
+  const { projectId } = useParams(); // 유튜브 링크
+  const [caption, setCaption] = useState(''); // 캡션 (자막)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,7 +34,12 @@ export const Edit = () => {
         });
         
         console.log('받은 데이터:', response.data); // 받은 데이터 콘솔에 출력
-        setlink(response.data);
+        
+        // 여기서 link와 caption을 개별적으로 상태에 설정합니다.
+        setLink(response.data.link); // link를 상태에 저장
+        setCaption(response.data.caption); // caption을 상태에 저장
+        setGeneratedData(response.data.generatedData || ""); // 생성된 데이터도 저장, 없으면 빈 문자열로 초기화
+        
         
       } catch (error) {
         console.error('데이터 요청 에러 발생:', error.response?.data || error.message);
@@ -42,6 +48,7 @@ export const Edit = () => {
 
     fetchData(); // 데이터 가져오기 호출
   }, [projectId]);
+
 
 
   const handleInputChange = (event) => {
@@ -101,27 +108,18 @@ export const Edit = () => {
 
   const handleRecommend = async () => {
     try {
-      // 추천 제목 및 태그를 서버에서 요청
       const response = await axios.post('http://localhost:4000/llm/recommend', { content: generatedData });
-  
-      // 서버 응답에서 문자열을 \n으로 쪼개기
-      const dataString = response.data; // 예: "제목: 오디오 추출 SRT 파일 확인 방법\n해시태그1: 오디오 추출\n해시태그2: SRT 파일"
-  
-      // \n으로 분리
-      const lines = dataString.split('\n');
-  
-      // 첫 번째 줄에서 제목 추출
-      const title = lines[0].replace(/제목:\s*/, '').trim(); // "제목: " 제거
-  
-      // 나머지 줄에서 해시태그 추출
-      const hashtags = lines
-        .slice(1) // 첫 번째 줄 제외
-        .filter(line => line.startsWith('해시태그')) // "해시태그"로 시작하는 줄만 필터링
-        .map(line => line.replace(/해시태그\d:\s*/, '').trim()); // "해시태그X: " 제거
-  
-      // 상태 설정
-      setrecommendTitle(title); // 추천 제목 설정
-      setrecommendTag(hashtags); // 추천 태그 설정
+    
+      const data = response.data;
+
+      const title = data.제목 || ''; 
+      
+      const hashtags = Object.keys(data) 
+        .filter(key => key.startsWith('해시태그')) 
+        .map(key => data[key].trim()) 
+
+      setrecommendTitle(title);
+      setrecommendTag(hashtags);
   
       console.log('추천 제목:', title);
       console.log('추천 태그:', hashtags);
@@ -167,12 +165,12 @@ export const Edit = () => {
                 </div>
               </div>
               <div className="grid gap-4">
-                <div>
+              <div>
                   <Label htmlFor="content">영상 자막</Label>
                   <Textarea
                     id="content"
                     rows={5}
-                    defaultValue={generatedData}
+                    defaultValue={caption || generatedData} // caption이 존재하면 사용, 아니면 generatedData 사용
                   />
                 </div>
 
