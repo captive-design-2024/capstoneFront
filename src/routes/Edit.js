@@ -38,7 +38,8 @@ export const Edit = () => {
         // 여기서 link와 caption을 개별적으로 상태에 설정합니다.
         setLink(response.data.link); // link를 상태에 저장
         setCaption(response.data.caption); // caption을 상태에 저장
-        setGeneratedData(response.data.generatedData || ""); // 생성된 데이터도 저장, 없으면 빈 문자열로 초기화
+        setGeneratedData(response.data.generatedData); // 생성된 데이터도 저장, 없으면 빈 문자열로 초기화
+        
         
         
       } catch (error) {
@@ -81,6 +82,7 @@ export const Edit = () => {
       await axios.post(`http://localhost:3000/work/generateSub`, formData);
       const readSRTData = { content_projectID: projectId, content_language: "kr" };
       const responseReadSRT = await axios.post(`http://localhost:3000/files/readSRT`, readSRTData);
+      setCaption(responseReadSRT.data);
       setGeneratedData(responseReadSRT.data);
     } catch (error) {
       console.error('에러 발생:', error.response?.data || error.message);
@@ -88,18 +90,15 @@ export const Edit = () => {
   };
 
   const handleCheck = async () => {
+    const contentToCheck = generatedData || caption; // generatedData가 없으면 caption 사용
+
     try {
-      // 보낼 데이터를 콘솔에서 확인
-      console.log('보내는 데이터:', generatedData);
-  
-      // axios.post 요청 실행
-      const response = await axios.post('http://localhost:4000/llm/check', { content: generatedData });
-  
-      // 서버 응답 출력
+      console.log('보내는 데이터:', contentToCheck);
+
+      const response = await axios.post('http://localhost:4000/llm/check', { content: contentToCheck });
+
       console.log('서버 응답:', response.data);
       setCheckedData(response.data); // 서버 응답 데이터를 checkedData에 저장
-    
-  
     } catch (error) {
       console.error('에러 발생:', error.response?.data || error.message);
     }
@@ -107,16 +106,16 @@ export const Edit = () => {
   
 
   const handleRecommend = async () => {
+    const contentToRecommend = generatedData || caption; // generatedData가 없으면 caption 사용
+
     try {
-      const response = await axios.post('http://localhost:4000/llm/recommend', { content: generatedData });
-    
+      const response = await axios.post('http://localhost:4000/llm/recommend', { content: contentToRecommend });
       const data = response.data;
 
       const title = data.제목 || ''; 
-      
       const hashtags = Object.keys(data) 
         .filter(key => key.startsWith('해시태그')) 
-        .map(key => data[key].trim()) 
+        .map(key => data[key].trim()); 
 
       setrecommendTitle(title);
       setrecommendTag(hashtags);
@@ -130,17 +129,16 @@ export const Edit = () => {
   
   
   const handleTranslation = async () => {
+    const contentToTranslate = generatedData || caption; // generatedData가 없으면 caption 사용
+
     try {
-      // 서버에 번역 요청
       const response = await axios.post('http://localhost:4000/llm/translate', {
-        content: generatedData,
+        content: contentToTranslate,
         language: selectedLanguage, // 선택한 언어를 함께 전송
       });
 
-      // 서버 응답 처리
       console.log('번역 결과:', response.data);
       settranslation(response.data);
-      // 필요에 따라 번역 결과를 상태에 저장하거나 처리
     } catch (error) {
       console.error('번역 요청 에러 발생:', error.response?.data || error.message);
     }
@@ -211,7 +209,7 @@ export const Edit = () => {
 
       </div>
 
-      {/* 하단 페이지: 자막 번역 ss*/}
+      {/* 하단 페이지: 자막 번역 */}
       <div className="bg-white mt-4">
         <header className="bg-white text-gray-900 py-4 px-6 text-xl font-bold flex justify-between items-center">
           번역 및 AI 기능
