@@ -140,41 +140,94 @@ export const Edit = () => {
   };  
 
   const handleUpload = async () => {
-    window.open('http://localhost:3000/auth', '_blank');
-    
-  }
-  
-  
-  
-  /*const handleUpload = async () => {
-    const contentToUpload = caption; 
-    const id = projectId; // URL 파라미터 또는 상태에서 프로젝트 ID 사용
-    //const language = selectedLanguage; // 사용자 선택에 따라 설정된 언어
-    const language = "kr"; 
+    let accessToken = null;
 
-    console.log("내용", contentToUpload);
-    console.log("아이디", id);
-    console.log("언어", language);
+    // 토큰 가져오기
+    try {
+      const tokenResponse = await fetch('http://localhost:3000/token', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!tokenResponse.ok) {
+        throw new Error('Failed to fetch token');
+      }
+
+      const tokenData = await tokenResponse.json();
+      accessToken = tokenData.access;
+    } catch (error) {
+      console.error('Error fetching token:', error);
+      return; // 토큰 가져오기에 실패하면 업로드를 중단
+    }
+
+    // 토큰이 없으면 새 창 열기
+    if (!accessToken) {
+      window.open('http://localhost:3000/auth', '_blank');
+      return; // 토큰이 없을 때 새 창을 연 후 함수 종료
+    }
+
+    let youtubelink = null;
+    try {
+  // POST 요청을 통해 youtubelink 가져오기
+  const linkResponse = await fetch('http://localhost:3000/project/purelink', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      id: projectId, // 필요한 경우, 요청에 필요한 데이터를 함께 보냅니다
+    }),
+  });
+
+  if (!linkResponse.ok) {
+    throw new Error('Failed to fetch youtubelink');
+  }
+
+  // 응답이 JSON이 아닌 문자열일 경우 text()로 처리
+  const linkData = await linkResponse.text();
+  youtubelink = linkData;  // 서버에서 받은 youtubelink 저장
+
+} catch (error) {
+  console.error('Error fetching youtubelink:', error);
+  return; // youtubelink 가져오기에 실패하면 업로드를 중단
+}
+
+    // 업로드할 데이터 설정
+    const captionFilePath = caption; // 업로드할 내용
+    const id = projectId; // 프로젝트 ID
+    const videoId = youtubelink;
+    const language = "ko"; // 사용자 지정 언어 (고정값으로 설정됨)
+    
   
-    if (!contentToUpload || !id || !language) {
+    console.log("내용:", captionFilePath);
+    console.log("퓨어링크:", youtubelink);
+    console.log("언어:", language);
+    console.log('Access Token:', accessToken);
+  
+    if (!captionFilePath || !youtubelink || !language || !accessToken) {
       console.log("업로드할 데이터가 부족합니다.");
       return;
     }
   
+    //파일 업로드 요청
     try {
-      const response = await axios.post('http://localhost:3000/files/upload', {
-        content: contentToUpload,
-        id: id,
-        language: language
+      const uploadResponse = await axios.post('http://localhost:3000/youtube', {
+        captionFilePath: captionFilePath,
+        videoId: youtubelink,
+        language: language,
+        access: accessToken
       });
   
-      console.log('업로드 완료:', response.data);
+      console.log('업로드 완료:', uploadResponse.data);
       alert('업로드가 성공적으로 완료되었습니다.');
     } catch (error) {
       console.error('업로드 중 에러 발생:', error.response?.data || error.message);
       alert('업로드에 실패했습니다.');
     }
-  };*/
+  };
+  
 
   const handlecancle = async () => {
       navigate('/home');
