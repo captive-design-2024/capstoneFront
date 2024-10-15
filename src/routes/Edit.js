@@ -140,6 +140,11 @@ export const Edit = () => {
   };  
 
   const handleUpload = async () => {
+    window.location.href = 'http://localhost:3000/auth';
+  }
+  
+  
+  /*const handleUpload = async () => {
     const contentToUpload = caption; 
     const id = projectId; // URL 파라미터 또는 상태에서 프로젝트 ID 사용
     //const language = selectedLanguage; // 사용자 선택에 따라 설정된 언어
@@ -153,7 +158,6 @@ export const Edit = () => {
       console.log("업로드할 데이터가 부족합니다.");
       return;
     }
-
   
     try {
       const response = await axios.post('http://localhost:3000/files/upload', {
@@ -168,7 +172,7 @@ export const Edit = () => {
       console.error('업로드 중 에러 발생:', error.response?.data || error.message);
       alert('업로드에 실패했습니다.');
     }
-  };
+  };*/
 
   const handlecancle = async () => {
       navigate('/home');
@@ -259,9 +263,9 @@ export const Edit = () => {
                 </div>
                 <div className="mt-7" />
                 <div className="flex justify-end space-x-2">
-                  <Button variant="outline" size="sm">취소</Button>
-                  <Button variant="solid" size="sm">저장</Button>
-                  <Button variant="solid" size="sm">업로드</Button>
+                  <Button variant="outline" size="sm" onClick={handlecancle}>취소</Button>
+                  <Button variant="solid" size="sm" onClick={handleSave}>저장</Button>
+                  <Button variant="solid" size="sm" onClick={handleUpload}>업로드</Button>
                 </div>
               </div>
             </div>
@@ -311,9 +315,9 @@ export const Edit = () => {
                 </div>
                 <div className="mt-1" />
                 <div className="flex justify-end space-x-2">
-                  <Button variant="outline" size="sm" onClick={handlecancle}>취소</Button>
-                  <Button variant="solid" size="sm" onClick={handleSave}>저장</Button>
-                  <Button variant="solid" size="sm" onClick={handleUpload}>업로드</Button>
+                  <Button variant="outline" size="sm">취소</Button>
+                  <Button variant="solid" size="sm">저장</Button>
+                  <Button variant="solid" size="sm">업로드</Button>
                 </div>
               </div>
             </div>
@@ -359,6 +363,13 @@ export const Edit = () => {
             </div>
           </div>
           <div className="mt-4">
+            <h3 className="text-lg font-semibold text-black">생성된 mp3 파일</h3>
+            <div className="flex items-center justify-between mt-2">
+              <Audio src="generated-voice.mp3" />
+              <Button variant="solid" size="sm">다운</Button>
+            </div>
+          </div>
+          <div className="mt-4">
             <Label htmlFor="video-input">모델 학습용 영상 (원하는 모델이 없을 때)</Label>
             <div className="flex flex-col gap-4 mt-2">
               <div>
@@ -384,13 +395,6 @@ export const Edit = () => {
           <div className="flex justify-end space-x-2">
             <Button variant="outline" size="sm">모델 학습</Button>
             <Button variant="solid" size="sm" onClick={handleAddModel}>모델 추가</Button>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold text-black">생성된 mp3 파일</h3>
-            <div className="flex items-center justify-between mt-2">
-              <Audio src="generated-voice.mp3" />
-              <Button variant="solid" size="sm">다운</Button>
-            </div>
           </div>
         </div>
       </div>
