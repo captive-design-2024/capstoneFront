@@ -140,8 +140,10 @@ export const Edit = () => {
   };  
 
   const handleUpload = async () => {
-    window.location.href = 'http://localhost:3000/auth';
+    window.open('http://localhost:3000/auth', '_blank');
+    
   }
+  
   
   
   /*const handleUpload = async () => {
