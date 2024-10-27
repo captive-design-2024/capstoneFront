@@ -20,11 +20,19 @@ export const Edit = () => {
   const navigate = useNavigate();
   const [selectedModel, setSelectedModel] = useState(''); // 선택한 모델 저장
   const [modelName, setModelName] = useState(''); // 입력된 모델 이름 저장
+  const [loading, setLoading] = useState(false); // 자막 생성 로딩 상태 추가
+  const [loading2, setLoading2] = useState(false); // 자막 수정 로딩 상태 추가
+  const [loading3, setLoading3] = useState(false); // 자막 번역 로딩 상태 추가
+  //추가
+  const [audioUrl, setAudioUrl] = useState(null);
+  
+
   const [modelOptions, setModelOptions] = useState([ // 모델 선택 옵션 상태 추가
     { value: "", label: "모델 선택", disabled: true },
     { value: "en", label: "침착맨" },
     { value: "es", label: "슈카월드" },
   ]);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,11 +86,24 @@ export const Edit = () => {
     { value: "ja", label: "일본어" },
     { value: "zh", label: "중국어" },
   ];
+
+  const languageOptionstwo = [
+    { value: "", label: "언어 선택", disabled: true },
+    { value: "ko", label: "한국어"},
+    { value: "en", label: "영어" },
+    { value: "es", label: "스페인어" },
+    { value: "fr", label: "프랑스어" },
+    { value: "de", label: "독일어" },
+    { value: "ja", label: "일본어" },
+    { value: "zh", label: "중국어" },
+  ];
+
   const handleGenerate = async (event) => {
     event.preventDefault();
     const formData = { content_projectID: projectId };
 
     try {
+      setLoading(true); // '자막 생성 중...' 상태 설정
       await axios.post(`http://localhost:3000/work/generateSub`, formData);
       const readSRTData = { content_projectID: projectId, content_language: "kr" };
       const responseReadSRT = await axios.post(`http://localhost:3000/files/readSRT`, readSRTData);
@@ -90,6 +111,8 @@ export const Edit = () => {
       setGeneratedData(responseReadSRT.data);
     } catch (error) {
       console.error('에러 발생:', error.response?.data || error.message);
+    } finally {
+      setLoading(false); // 로딩 상태 해제
     }
   };
 
@@ -97,6 +120,7 @@ export const Edit = () => {
     const contentToCheck = generatedData || caption; // generatedData가 없으면 caption 사용
 
     try {
+      setLoading2(true); // '자막 수정 중...' 상태 설정
       console.log('보내는 데이터:', contentToCheck);
 
       const response = await axios.post('http://localhost:4000/llm/check', { content: contentToCheck });
@@ -105,6 +129,8 @@ export const Edit = () => {
       setCheckedData(response.data); // 서버 응답 데이터를 checkedData에 저장
     } catch (error) {
       console.error('에러 발생:', error.response?.data || error.message);
+    } finally {
+      setLoading2(false); // 로딩 상태 해제
     }
   };
 
@@ -140,9 +166,11 @@ export const Edit = () => {
   };  
 
   const handleUpload = async () => {
-    let accessToken = null;
-
+    // 새 창 열기
+    window.open('http://localhost:3000/auth', '_blank');
+  
     // 토큰 가져오기
+    let accessToken = null;
     try {
       const tokenResponse = await fetch('http://localhost:3000/token', {
         method: 'GET',
@@ -150,68 +178,56 @@ export const Edit = () => {
           'Content-Type': 'application/json',
         },
       });
-
+  
       if (!tokenResponse.ok) {
         throw new Error('Failed to fetch token');
       }
-
+  
       const tokenData = await tokenResponse.json();
       accessToken = tokenData.access;
     } catch (error) {
       console.error('Error fetching token:', error);
       return; // 토큰 가져오기에 실패하면 업로드를 중단
     }
-
-    // 토큰이 없으면 새 창 열기
-    if (!accessToken) {
-      window.open('http://localhost:3000/auth', '_blank');
-      return; // 토큰이 없을 때 새 창을 연 후 함수 종료
-    }
-
+  
+    // 유튜브 링크 가져오기
     let youtubelink = null;
     try {
-  // POST 요청을 통해 youtubelink 가져오기
-  const linkResponse = await fetch('http://localhost:3000/project/purelink', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      id: projectId, // 필요한 경우, 요청에 필요한 데이터를 함께 보냅니다
-    }),
-  });
-
-  if (!linkResponse.ok) {
-    throw new Error('Failed to fetch youtubelink');
-  }
-
-  // 응답이 JSON이 아닌 문자열일 경우 text()로 처리
-  const linkData = await linkResponse.text();
-  youtubelink = linkData;  // 서버에서 받은 youtubelink 저장
-
-} catch (error) {
-  console.error('Error fetching youtubelink:', error);
-  return; // youtubelink 가져오기에 실패하면 업로드를 중단
-}
-
-    // 업로드할 데이터 설정
-    const captionFilePath = caption; // 업로드할 내용
-    const id = projectId; // 프로젝트 ID
-    const videoId = youtubelink;
-    const language = "ko"; // 사용자 지정 언어 (고정값으로 설정됨)
-    
+      const linkResponse = await fetch('http://localhost:3000/project/purelink', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: projectId, // 프로젝트 ID
+        }),
+      });
   
-    console.log("내용:", captionFilePath);
-    console.log("퓨어링크:", youtubelink);
-    console.log("언어:", language);
-    console.log('Access Token:', accessToken);
+      if (!linkResponse.ok) {
+        throw new Error('Failed to fetch youtubelink');
+      }
+  
+      const linkData = await linkResponse.text();
+      youtubelink = linkData;
+  
+    } catch (error) {
+      console.error('Error fetching youtubelink:', error);
+      return; // 링크 가져오기 실패 시 중단
+    }
+  
+    // 업로드할 데이터 설정
+    const captionFilePath = caption; 
+    const language = selectedLanguage || "ko";
   
     if (!captionFilePath || !youtubelink || !language || !accessToken) {
       console.log("업로드할 데이터가 부족합니다.");
       return;
     }
   
-    //파일 업로드 요청
+    let captionList = null;
+    let uploadedId = null;
+  
+    // 자막 업로드 시도
     try {
       const uploadResponse = await axios.post('http://localhost:3000/youtube', {
         captionFilePath: captionFilePath,
@@ -221,34 +237,106 @@ export const Edit = () => {
       });
   
       console.log('업로드 완료:', uploadResponse.data);
+  
+      // 업로드 완료된 데이터에서 id 추출
+      uploadedId = uploadResponse.data.id;
+      console.log('업로드된 자막 ID:', uploadedId);
+  
       alert('업로드가 성공적으로 완료되었습니다.');
+  
     } catch (error) {
       console.error('업로드 중 에러 발생:', error.response?.data || error.message);
-      alert('업로드에 실패했습니다.');
+  
+      // 업로드 실패 시 자막 목록 다시 가져오기
+      try {
+        const listResponse = await fetch('http://localhost:3000/youtube/list', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,  // 인증을 위해 토큰 추가
+          },
+          body: JSON.stringify({
+            videoId: youtubelink, // 서버로 보낼 videoId
+          }),
+        });
+  
+        if (!listResponse.ok) {
+          throw new Error('Failed to fetch caption list');
+        }
+  
+        captionList = await listResponse.json();  // 자막 목록 받아오기
+        console.log('자막 목록:', captionList);
+  
+        // items 배열에서 가장 최근 자막 ID 추출
+        if (captionList.items && Array.isArray(captionList.items)) {
+          const lastItem = captionList.items[captionList.items.length - 1];
+          const failedId = lastItem.id;
+          console.log('업로드 실패 후 목록에서 가져온 자막 ID:', failedId);
+  
+          // 업로드 실패한 자막을 업데이트하는 요청
+          try {
+            const updateResponse = await fetch('http://localhost:3000/youtube/update', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify({
+                id: failedId,              // 실패한 자막 ID
+                captionFilePath: captionFilePath,  // 기존의 captionFilePath
+              }),
+            });
+  
+            if (!updateResponse.ok) {
+              throw new Error('Failed to update caption');
+            }
+  
+            console.log('자막 업데이트 성공:', await updateResponse.json());
+            alert('자막 업데이트가 성공적으로 완료되었습니다.');
+  
+          } catch (updateError) {
+            console.error('Error updating caption:', updateError);
+          }
+  
+        } else {
+          console.log('items 배열이 없습니다.');
+        }
+  
+      } catch (listError) {
+        console.error('Error fetching caption list after upload failure:', listError);
+      }
     }
   };
   
 
   const handlecancle = async () => {
-      navigate('/home');
+      navigate('/Mypage');
   };
   
 
   const handleRecommend = async () => {
     const contentToRecommend = generatedData || caption; // generatedData가 없으면 caption 사용
-
+  
+    // 선택한 언어의 label 값을 찾기
+    const selectedLanguageLabel = languageOptionstwo.find(option => option.value === selectedLanguage)?.label || '';
+  
     try {
-      const response = await axios.post('http://localhost:4000/llm/recommend', { content: contentToRecommend });
+      const response = await axios.post('http://localhost:4000/llm/recommend', { 
+        content: contentToRecommend,
+        language: selectedLanguageLabel, // 선택한 언어의 label 전송
+      });
+  
       const data = response.data;
-
+  
       const title = data.제목 || ''; 
-      const hashtags = Object.keys(data) 
+      const hashtags = Object.keys(data)
         .filter(key => key.startsWith('해시태그')) 
         .map(key => data[key].trim()); 
-
+  
       setrecommendTitle(title);
       setrecommendTag(hashtags);
   
+      console.log("보낸 언어:", selectedLanguageLabel);
       console.log('추천 제목:', title);
       console.log('추천 태그:', hashtags);
     } catch (error) {
@@ -257,10 +345,12 @@ export const Edit = () => {
   };
   
   
+  
   const handleTranslation = async () => {
     const contentToTranslate = generatedData || caption; // generatedData가 없으면 caption 사용
 
     try {
+      setLoading3(true); // '자막 수정 중...' 상태 설정
       const response = await axios.post('http://localhost:4000/llm/translate', {
         content: contentToTranslate,
         language: selectedLanguage, // 선택한 언어를 함께 전송
@@ -270,6 +360,8 @@ export const Edit = () => {
       settranslation(response.data);
     } catch (error) {
       console.error('번역 요청 에러 발생:', error.response?.data || error.message);
+    } finally {
+      setLoading3(false); // 로딩 상태 해제
     }
   };
 
@@ -281,7 +373,72 @@ export const Edit = () => {
     }
   };
 
+  const handleDubbing = async () => {
+    try {
+      const formData = {
+        content_projectID: projectId,
+      };
 
+      const response = await axios.post('http://localhost:3000/work/generateDubbing', formData, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.status === 200 || response.status === 201) {
+        console.log('파일 생성 완료:', response.data);
+      }
+    } catch (error) {
+      console.error('첫 번째 요청 중 에러 발생:', error.response?.data || error.message);
+    }
+  };
+  
+
+  const handleWAV = async () => {
+    try {
+      const formData = {
+        content_projectID: projectId,
+        content_format: "voice",
+        content_language: "en"
+      };
+  
+      console.log('생성 요청:', formData);
+  
+      const response = await axios.post('http://localhost:3000/files/downloadWAV', formData, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        responseType: 'blob',
+      });
+  
+      if (response.status === 200 || response.status === 201) {
+        const blob = new Blob([response.data], { type: 'audio/wav' });
+        const url = window.URL.createObjectURL(blob);
+        
+        // Blob URL 확인
+        console.log('Blob URL:', url); // Blob URL을 콘솔에 출력
+
+  
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'generated.wav'; // 다운로드할 파일명
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        
+        window.URL.revokeObjectURL(url);
+        console.log('파일이 성공적으로 저장되었습니다.', response.data);
+      }
+    } catch (error) {
+      console.error('더빙 생성 오류:', error);
+    }
+  };
+  
+
+
+  
+  
+  
+  
   
   return (
     <div className="w-full bg-white">
@@ -306,14 +463,18 @@ export const Edit = () => {
                   <Textarea
                     id="content"
                     rows={5}
-                    defaultValue={caption || generatedData} // caption이 존재하면 사용, 아니면 generatedData 사용
+                    defaultValue={loading ? '자막 생성 중…' : (caption || generatedData)}
                   />
                 </div>
                 <div className="mt-1" />
                 <div>
-                  <Label htmlFor="content">수정된 자막</Label>
-                  <div className="bg-gray-100 border border-gray-300 p-4 rounded-md">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{checkedData}</ReactMarkdown>
+                    <Label htmlFor="content">수정된 자막</Label>
+                    <div className="bg-gray-100 border border-gray-300 p-4 rounded-md">
+                    {loading2 ? (
+                      '자막 수정 중…' // 로딩 중일 때 표시할 메시지
+                    ) : (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{checkedData}</ReactMarkdown>
+                    )}
                   </div>
                 </div>
                 <div className="mt-7" />
@@ -365,14 +526,14 @@ export const Edit = () => {
                   <Textarea
                     id="translation"
                     rows={5}
-                    defaultValue={translation}
+                    defaultValue={loading3 ? '자막 번역 중…' : translation}
                   />
                 </div>
                 <div className="mt-1" />
                 <div className="flex justify-end space-x-2">
-                  <Button variant="outline" size="sm">취소</Button>
-                  <Button variant="solid" size="sm">저장</Button>
-                  <Button variant="solid" size="sm">업로드</Button>
+                <Button variant="outline" size="sm" onClick={handlecancle}>취소</Button>
+                {/* <Button variant="solid" size="sm">저장</Button> */}
+                  <Button variant="solid" size="sm" onClick={handleUpload}>업로드</Button>
                 </div>
               </div>
             </div>
@@ -381,7 +542,15 @@ export const Edit = () => {
             <div className="bg-white rounded-lg shadow-md p-4 border border-gray-300">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl font-bold text-black">제목 및 태그 추천</h2>
+                <div className="flex space-x-2">
+                <Select
+                  id="translation-language"
+                  options={languageOptionstwo}
+                  onChange={(e) => setSelectedLanguage(e.target.value)} // 선택한 언어 상태 업데이트
+                  style={{ backgroundColor: '#808080', color: 'white' }}
+                />
                 <Button variant="outline" size="sm" onClick={handleRecommend}>추천받기</Button>
+              </div>
               </div>
               <div className="grid gap-4">
                 <div>
@@ -394,62 +563,39 @@ export const Edit = () => {
                 </div>
                 <div className="mt-4" />
                 <div className="flex justify-end space-x-2">
-                  <Button variant="outline" size="sm">취소</Button>
+                <Button variant="outline" size="sm" onClick={handlecancle}>취소</Button>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="w-1/2 p-4">
-        <div className="bg-white rounded-lg shadow-md p-4 border border-gray-300">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xl font-bold text-black">자막 더빙</h2>
-            <div className="flex space-x-2">
-              <Select
-                id="model"
-                options={modelOptions}
-                value={selectedModel}
-                className="mr-2"
-                onChange={(e) => setSelectedModel(e.target.value)}
-                style={{ backgroundColor: '#808080', color: 'white' }}
-              />
-              <Button variant="outline" size="sm">생성</Button>
-            </div>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold text-black">생성된 mp3 파일</h3>
-            <div className="flex items-center justify-between mt-2">
-              <Audio src="generated-voice.mp3" />
-              <Button variant="solid" size="sm">다운</Button>
-            </div>
-          </div>
-          <div className="mt-4">
-            <Label htmlFor="video-input">모델 학습용 영상 (원하는 모델이 없을 때)</Label>
-            <div className="flex flex-col gap-4 mt-2">
-              <div>
-                <Input
-                  placeholder="모델 이름 입력"
-                  value={modelName}
-                  onChange={(e) => setModelName(e.target.value)}
-                  className="border border-gray-300 rounded p-2 w-1/3 bg-white"
-                />
-              </div>
-              {Array.from({ length: 3 }, (_, index) => (
-                <div key={index}>
-                  <input
-                    type="text"
-                    placeholder={`영상 주소 ${index + 1}`}
-                    className="border border-gray-300 rounded p-2 w-full bg-white"
+      {/* 하단2 페이지: 자막 번역 */}
+      <div className="bg-white mt-4">
+        <div className="flex">
+          <div className="w-1/2 p-4">
+            <div className="bg-white rounded-lg shadow-md p-4 border border-gray-300">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl font-bold text-black">자막 더빙</h2>
+                <div className="flex space-x-2">
+                  <Select
+                    id="model"
+                    options={modelOptions}
+                    value={selectedModel}
+                    className="mr-2"
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    style={{ backgroundColor: '#808080', color: 'white' }}
                   />
+                  <Button variant="outline" size="sm" onClick={handleDubbing}>생성</Button>
                 </div>
-              ))}
+              </div>
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold text-black">생성된 mp3 파일</h3>
+                <div className="flex items-center justify-between mt-2">
+                  <Button variant="solid" size="sm" onClick={handleWAV}>다운</Button>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="mt-4"></div>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" size="sm">모델 학습</Button>
-            <Button variant="solid" size="sm" onClick={handleAddModel}>모델 추가</Button>
           </div>
         </div>
       </div>
