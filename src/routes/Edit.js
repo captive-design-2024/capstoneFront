@@ -123,7 +123,11 @@ export const Edit = () => {
       setLoading2(true); // '자막 수정 중...' 상태 설정
       console.log('보내는 데이터:', contentToCheck);
 
-      const response = await axios.post('http://localhost:4000/llm/check', { content: contentToCheck });
+      const response = await axios.post('http://localhost:3000/work/llm-check', {
+         content: contentToCheck,
+         content_language: "kr",
+         content_projectID: projectId
+        });
 
       console.log('서버 응답:', response.data);
       setCheckedData(response.data); // 서버 응답 데이터를 checkedData에 저장
@@ -321,7 +325,7 @@ export const Edit = () => {
     const selectedLanguageLabel = languageOptionstwo.find(option => option.value === selectedLanguage)?.label || '';
   
     try {
-      const response = await axios.post('http://localhost:4000/llm/recommend', { 
+      const response = await axios.post('http://localhost:3000/work/llm-recommend', { 
         content: contentToRecommend,
         language: selectedLanguageLabel, // 선택한 언어의 label 전송
       });
@@ -351,9 +355,10 @@ export const Edit = () => {
 
     try {
       setLoading3(true); // '자막 수정 중...' 상태 설정
-      const response = await axios.post('http://localhost:4000/llm/translate', {
+      const response = await axios.post('http://localhost:3000/work/llm-translate', {
         content: contentToTranslate,
-        language: selectedLanguage, // 선택한 언어를 함께 전송
+        content_language: selectedLanguage, // 선택한 언어를 함께 전송
+        content_projectID: projectId
       });
 
       console.log('번역 결과:', response.data);
@@ -413,6 +418,9 @@ export const Edit = () => {
       if (response.status === 200 || response.status === 201) {
         const blob = new Blob([response.data], { type: 'audio/wav' });
         const url = window.URL.createObjectURL(blob);
+
+        // 상태에 오디오 URL 설정
+        setAudioUrl(url);
         
         // Blob URL 확인
         console.log('Blob URL:', url); // Blob URL을 콘솔에 출력
@@ -589,9 +597,12 @@ export const Edit = () => {
                   <Button variant="outline" size="sm" onClick={handleDubbing}>생성</Button>
                 </div>
               </div>
-              <div className="mt-4">
+              <div className="grid gap-4">
                 <h3 className="text-lg font-semibold text-black">생성된 mp3 파일</h3>
                 <div className="flex items-center justify-between mt-2">
+                  {audioUrl && (
+                    <audio controls src={audioUrl} />
+                  )}
                   <Button variant="solid" size="sm" onClick={handleWAV}>다운</Button>
                 </div>
               </div>
