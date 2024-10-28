@@ -103,6 +103,8 @@ export const Mypage = () => {
       setShowModal(false);
       setProjectName('');
       setProjectUrl('');
+
+      window.location.reload();
       
     } catch (error) {
       const errorMessage = error.response?.data?.message || '서버 오류가 발생했습니다.';
@@ -337,7 +339,7 @@ export const Mypage = () => {
                 className="hover:bg-blue-600"
                 onClick={() => {
                   handleAddModel(); // 모델 추가 함수 호출
-                  //setShowModelModal(false); // 모달 닫기
+                  setShowModelModal(false); // 모달 닫기
                 }}
               >
                 추가

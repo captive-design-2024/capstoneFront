@@ -61,7 +61,7 @@ export const Edit = () => {
   }, [projectId]);
 
   const languageOptions = [
-    { value: "", label: "언어 선택", disabled: true },
+    { value: "", label: "언어 선택"},
     { value: "en", label: "영어" },
     { value: "es", label: "스페인어" },
     { value: "fr", label: "프랑스어" },
@@ -71,7 +71,7 @@ export const Edit = () => {
   ];
 
   const languageOptionstwo = [
-    { value: "", label: "언어 선택", disabled: true },
+    { value: "", label: "언어 선택"},
     { value: "ko", label: "한국어"},
     { value: "en", label: "영어" },
     { value: "es", label: "스페인어" },
@@ -85,6 +85,7 @@ export const Edit = () => {
     event.preventDefault();
     const formData = { content_projectID: projectId };
 
+    console.log('생성 요청:', formData);
     try {
       setLoading(true); // '자막 생성 중...' 상태 설정
       await axios.post(`http://localhost:3000/work/generateSub`, formData);
@@ -117,8 +118,8 @@ export const Edit = () => {
         content_language: "kr"
       });
 
-    
-      console.log('서버 응답:', checkresponse.data);
+
+
       setCheckedData(checkresponse.data); // 서버 응답 데이터를 checkedData에 저장
 
 
@@ -332,8 +333,7 @@ export const Edit = () => {
       setrecommendTag(hashtags);
   
       console.log("보낸 언어:", selectedLanguageLabel);
-      console.log('추천 제목:', title);
-      console.log('추천 태그:', hashtags);
+
     } catch (error) {
       console.error('추천 요청 에러 발생:', error.response?.data || error.message);
     }
@@ -344,22 +344,32 @@ export const Edit = () => {
   const handleTranslation = async () => {
     const contentToTranslate = generatedData || caption; // generatedData가 없으면 caption 사용
 
+    console.log('서버 요청:', contentToTranslate);
+
+    console.log('llm_translate 호출:', {
+      content_projectID: projectId,
+      content_language: selectedLanguage,
+      content: contentToTranslate
+    });
+
     try {
       setLoading3(true); // '자막 수정 중...' 상태 설정
       await axios.post('http://localhost:3000/work/llm-translate', {
-        content: contentToTranslate,
+        content_projectID: projectId,
         //content_language: "en",
         content_language: selectedLanguage, // 선택한 언어를 함께 전송
-        content_projectID: projectId
+        content: contentToTranslate
       });
+
+      
 
       const transresponse = await axios.post(`http://localhost:3000/files/readSRT`, {
         content_projectID: projectId,
-        content_language: selectedLanguage,
+        content_language: selectedLanguage
       });
 
-    
-      console.log('서버 응답:', transresponse.data);
+
+
       settranslation(transresponse.data); // 서버 응답 데이터를 checkedData에 저장
 
     } catch (error) {
@@ -392,10 +402,10 @@ export const Edit = () => {
         },
       });
       if (response.status === 200 || response.status === 201) {
-        console.log('파일 생성 완료:', response.data);
+        console.log('파일 생성 완료');
       }
     } catch (error) {
-      console.error('첫 번째 요청 중 에러 발생:', error.response?.data || error.message);
+      console.error('요청 중 에러 발생:', error.response?.data || error.message);
     }
   };
   
@@ -408,7 +418,7 @@ export const Edit = () => {
         content_language: "en"
       };
   
-      console.log('생성 요청:', formData);
+      console.log('다운 요청:', formData);
   
       const response = await axios.post('http://localhost:3000/files/downloadWAV', formData, {
         headers: {
