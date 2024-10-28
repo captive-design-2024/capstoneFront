@@ -357,7 +357,8 @@ export const Edit = () => {
       setLoading3(true); // '자막 수정 중...' 상태 설정
       const response = await axios.post('http://localhost:3000/work/llm-translate', {
         content: contentToTranslate,
-        content_language: selectedLanguage, // 선택한 언어를 함께 전송
+        content_language: "en",
+        //content_language: selectedLanguage, // 선택한 언어를 함께 전송
         content_projectID: projectId
       });
 
@@ -370,6 +371,7 @@ export const Edit = () => {
     }
   };
 
+  //임시 미사용
   const handleAddModel = () => { // 모델 추가 핸들러 추가
     if (modelName) {
       const newModelOption = { value: modelName, label: modelName };
