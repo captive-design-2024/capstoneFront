@@ -22,7 +22,7 @@ export default function User() {
   const [newPassword, setNewPassword] = useState(''); // 변경할 비밀번호 상태
   const [email, setUserEmail] = useState('');
   const [phone_number, setUserPhone] = useState('');
-  const [title, setProjectTitle] = useState([]); // 프로젝트 제목 상태 추가
+  const [, setProjectTitle] = useState([]); // 프로젝트 제목 상태 추가
   const navigate = useNavigate();
 
   useEffect(() => {

@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams,useNavigate } from 'react-router-dom'; // useParams 임포트
 import axios from 'axios';
-import { Button, Label, Textarea, Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, Input, Select, Audio} from '../components/Components';
+import { Button, Label, Textarea, Input, Select} from '../components/Components';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 export const Edit = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
   const [generatedData, setGeneratedData] = useState(""); // 생성된 데이터를 위한 상태 추가
   const [checkedData, setCheckedData] = useState(''); // 서버에서 받아온 데이터를 저장할 상태 추가
   const [recommendtitle, setrecommendTitle] = useState(''); //추천 제목
@@ -19,15 +17,15 @@ export const Edit = () => {
   const [caption, setCaption] = useState(''); // 캡션 (자막)
   const navigate = useNavigate();
   const [selectedModel, setSelectedModel] = useState(''); // 선택한 모델 저장
-  const [modelName, setModelName] = useState(''); // 입력된 모델 이름 저장
+  //const [modelName, setModelName] = useState(''); // 입력된 모델 이름 저장
   const [loading, setLoading] = useState(false); // 자막 생성 로딩 상태 추가
   const [loading2, setLoading2] = useState(false); // 자막 수정 로딩 상태 추가
   const [loading3, setLoading3] = useState(false); // 자막 번역 로딩 상태 추가
-  //추가
-  const [audioUrl, setAudioUrl] = useState(null);
+  const [audioUrl, setAudioUrl] = useState(null); // 오디오 파일 저장 상태 추가
+  const [selectedLanguagetwo, setSelectedLanguagetwo] = useState(''); // 선택한 언어 저장 상태 추가
   
 
-  const [modelOptions, setModelOptions] = useState([ // 모델 선택 옵션 상태 추가
+  const [modelOptions, ] = useState([ // 모델 선택 옵션 상태 추가
     { value: "", label: "모델 선택", disabled: true },
     { value: "en", label: "침착맨" },
     { value: "es", label: "슈카월드" },
@@ -45,7 +43,7 @@ export const Edit = () => {
           },
         });
         
-        console.log('받은 데이터:', response.data); // 받은 데이터 콘솔에 출력
+        //console.log('받은 데이터:', response.data); // 받은 데이터 콘솔에 출력
         
         // 여기서 link와 caption을 개별적으로 상태에 설정합니다.
         setLink(response.data.link); // link를 상태에 저장
@@ -61,21 +59,6 @@ export const Edit = () => {
 
     fetchData(); // 데이터 가져오기 호출
   }, [projectId]);
-
-
-
-  const handleInputChange = (event) => {
-    setSearchTerm(event.target.value);
-  };
-
-  const handleInputFocus = () => {
-    setIsFocused(true);
-  };
-
-  const handleInputBlur = () => {
-    setIsFocused(false);
-  };
-
 
   const languageOptions = [
     { value: "", label: "언어 선택", disabled: true },
@@ -123,14 +106,22 @@ export const Edit = () => {
       setLoading2(true); // '자막 수정 중...' 상태 설정
       console.log('보내는 데이터:', contentToCheck);
 
-      const response = await axios.post('http://localhost:3000/work/llm-check', {
+      await axios.post('http://localhost:3000/work/llm-check', {
          content: contentToCheck,
          content_language: "kr",
          content_projectID: projectId
         });
 
-      console.log('서버 응답:', response.data);
-      setCheckedData(response.data); // 서버 응답 데이터를 checkedData에 저장
+      const checkresponse = await axios.post(`http://localhost:3000/files/readSRT`, {
+        content_projectID: projectId,
+        content_language: "kr"
+      });
+
+    
+      console.log('서버 응답:', checkresponse.data);
+      setCheckedData(checkresponse.data); // 서버 응답 데이터를 checkedData에 저장
+
+
     } catch (error) {
       console.error('에러 발생:', error.response?.data || error.message);
     } finally {
@@ -322,7 +313,7 @@ export const Edit = () => {
     const contentToRecommend = generatedData || caption; // generatedData가 없으면 caption 사용
   
     // 선택한 언어의 label 값을 찾기
-    const selectedLanguageLabel = languageOptionstwo.find(option => option.value === selectedLanguage)?.label || '';
+    const selectedLanguageLabel = languageOptionstwo.find(option => option.value === selectedLanguagetwo)?.label || '';
   
     try {
       const response = await axios.post('http://localhost:3000/work/llm-recommend', { 
@@ -347,7 +338,7 @@ export const Edit = () => {
       console.error('추천 요청 에러 발생:', error.response?.data || error.message);
     }
   };
-  
+
   
   
   const handleTranslation = async () => {
@@ -355,15 +346,22 @@ export const Edit = () => {
 
     try {
       setLoading3(true); // '자막 수정 중...' 상태 설정
-      const response = await axios.post('http://localhost:3000/work/llm-translate', {
+      await axios.post('http://localhost:3000/work/llm-translate', {
         content: contentToTranslate,
-        content_language: "en",
-        //content_language: selectedLanguage, // 선택한 언어를 함께 전송
+        //content_language: "en",
+        content_language: selectedLanguage, // 선택한 언어를 함께 전송
         content_projectID: projectId
       });
 
-      console.log('번역 결과:', response.data);
-      settranslation(response.data);
+      const transresponse = await axios.post(`http://localhost:3000/files/readSRT`, {
+        content_projectID: projectId,
+        content_language: selectedLanguage,
+      });
+
+    
+      console.log('서버 응답:', transresponse.data);
+      settranslation(transresponse.data); // 서버 응답 데이터를 checkedData에 저장
+
     } catch (error) {
       console.error('번역 요청 에러 발생:', error.response?.data || error.message);
     } finally {
@@ -372,19 +370,21 @@ export const Edit = () => {
   };
 
   //임시 미사용
-  const handleAddModel = () => { // 모델 추가 핸들러 추가
+  /*const handleAddModel = () => { // 모델 추가 핸들러 추가
     if (modelName) {
       const newModelOption = { value: modelName, label: modelName };
       setModelOptions((prevOptions) => [...prevOptions, newModelOption]);
       setModelName(''); // 입력 필드 초기화
     }
-  };
+  };*/
 
   const handleDubbing = async () => {
     try {
       const formData = {
         content_projectID: projectId,
       };
+
+      console.log('생성 요청:', formData);
 
       const response = await axios.post('http://localhost:3000/work/generateDubbing', formData, {
         headers: {
@@ -420,28 +420,31 @@ export const Edit = () => {
       if (response.status === 200 || response.status === 201) {
         const blob = new Blob([response.data], { type: 'audio/wav' });
         const url = window.URL.createObjectURL(blob);
-
-        // 상태에 오디오 URL 설정
+  
+        // 바로 audioUrl 상태에 설정
         setAudioUrl(url);
         
-        // Blob URL 확인
-        console.log('Blob URL:', url); // Blob URL을 콘솔에 출력
-
+        console.log('Blob URL:', url);
   
+        // 다운로드를 위한 URL 생성 및 다운로드 실행
+        const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = 'generated.wav'; // 다운로드할 파일명
+        a.href = downloadUrl;
+        a.download = 'generated.wav';
         document.body.appendChild(a);
         a.click();
         a.remove();
         
-        window.URL.revokeObjectURL(url);
+        // 다운로드 URL 해제
+        window.URL.revokeObjectURL(downloadUrl);
+  
         console.log('파일이 성공적으로 저장되었습니다.', response.data);
       }
     } catch (error) {
       console.error('더빙 생성 오류:', error);
     }
   };
+  
   
 
 
@@ -502,8 +505,8 @@ export const Edit = () => {
               <div className="relative w-full h-0 pb-[56.25%]">
                 <iframe
                   src={getlink}
+                  title="Description of the content in the iframe"
                   className="absolute top-0 left-0 w-full h-full"
-                  frameBorder="0"
                   allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
@@ -523,7 +526,6 @@ export const Edit = () => {
                   <Select
                     id="translation-language"
                     options={languageOptions}
-                    className="mr-2"
                     onChange={(e) => setSelectedLanguage(e.target.value)} // 선택한 언어 상태 업데이트
                     style={{ backgroundColor: '#808080', color: 'white' }}
                   />
@@ -556,7 +558,7 @@ export const Edit = () => {
                 <Select
                   id="translation-language"
                   options={languageOptionstwo}
-                  onChange={(e) => setSelectedLanguage(e.target.value)} // 선택한 언어 상태 업데이트
+                  onChange={(e) => setSelectedLanguagetwo(e.target.value)} // 선택한 언어 상태 업데이트
                   style={{ backgroundColor: '#808080', color: 'white' }}
                 />
                 <Button variant="outline" size="sm" onClick={handleRecommend}>추천받기</Button>
@@ -602,8 +604,10 @@ export const Edit = () => {
               <div className="grid gap-4">
                 <h3 className="text-lg font-semibold text-black">생성된 mp3 파일</h3>
                 <div className="flex items-center justify-between mt-2">
-                  {audioUrl && (
-                    <audio controls src={audioUrl} />
+                  {audioUrl ? (
+                    <audio controls src={audioUrl} style={{ width: '70%' }} />
+                  ) : (
+                    <p>오디오 재생 바</p>
                   )}
                   <Button variant="solid" size="sm" onClick={handleWAV}>다운</Button>
                 </div>
