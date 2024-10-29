@@ -94,7 +94,7 @@ export const Mypage = () => {
   
       const newSubtitle = {
         id: response.data.id,
-        title: `자막 ${subtitles.length + 1}`,
+        //title: `자막 ${subtitles.length + 1}`,
         summary: title,
         date: new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }),
       };
@@ -227,13 +227,14 @@ export const Mypage = () => {
         <div className="grid gap-4">
           {subtitles.map((subtitle, index) => (
             <div key={subtitle.id} className="bg-white rounded-lg shadow-md p-4 border border-gray-300">
-              <h2 className="text-xl font-bold mb-2">{subtitle.title}</h2>
+              <h2 className="text-xl font-bold mb-2">{subtitle.summary}</h2>
               {/* <h3 className="text-sm text-gray-500 mb-2">ID: {subtitle.id}</h3> ID 출력 */}
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium">{subtitle.summary}</h3>
-                    <p className="text-sm text-gray-500">{subtitle.date}</p>
+                    {/* <h3 className="font-medium">{subtitle.summary}</h3>
+                    <p className="text-sm text-gray-500">{subtitle.date}</p> */}
+                    <h3 className="text-sm text-gray-500">{subtitle.date}</h3> 
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button 
@@ -348,7 +349,67 @@ export const Mypage = () => {
           </div>
         </div>
       )}
+
+      {/* Footer */}
+    <footer className="bg-gray-900 text-white py-6 px-6">
+      <div className="container mx-auto flex flex-col items-center space-y-8">
+        <div className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mr-2 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M23.498 6.186a2.92 2.92 0 0 0-2.055-2.057C19.747 3.5 12 3.5 12 3.5s-7.747 0-9.443.629a2.92 2.92 0 0 0-2.055 2.057c-.586 3.303-.586 6.814-.586 6.814s0 3.511.586 6.814a2.92 2.92 0 0 0 2.055 2.057c1.696.629 9.443.629 9.443.629s7.747 0 9.443-.629a2.92 2.92 0 0 0 2.055-2.057c.586-3.303.586-6.814.586-6.814s0-3.511-.586-6.814ZM9.75 15.417V8.583L15.75 12 9.75 15.417Z" />
+          </svg>
+          <span className="text-sm cursor-pointer">YouTube SubHelper</span>
+        </div>
+        
+        <div className="grid grid-cols-4 gap-24">
+          {[
+            { name: '정준석', email: 'junseok@gmail.com' },
+            { name: '이재용', email: 'jaeyong@gmail.com' },
+            { name: '최원석', email: 'wonseok@gmail.com' },
+            { name: '김범서', email: 'beomseo@gmail.com' }
+          ].map(dev => (
+            <div key={dev.email} className="flex flex-col items-center">
+              <div className="text-sm font-bold">Developer</div>
+              <div className="text-sm font-bold">{dev.name}</div>
+              <div className="text-sm">{dev.email}</div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="flex items-center space-x-4 mt-4">
+          <div className="w-full border-b border-gray-600" />
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" className="text-sm hover:underline">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5 mr-1"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M23.498 6.186a2.92 2.92 0 0 0-2.055-2.057C19.747 3.5 12 3.5 12 3.5s-7.747 0-9.443.629a2.92 2.92 0 0 0-2.055 2.057c-.586 3.303-.586 6.814-.586 6.814s0 3.511.586 6.814a2.92 2.92 0 0 0 2.055 2.057c1.696.629 9.443.629 9.443.629s7.747 0 9.443-.629a2.92 2.92 0 0 0 2.055-2.057c.586-3.303.586-6.814.586-6.814s0-3.511-.586-6.814ZM9.75 15.417V8.583L15.75 12 9.75 15.417Z" />
+            </svg>
+          </a>
+          <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-sm hover:underline">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5 mr-1"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 5.304 3.438 9.79 8.207 11.388.6.112.827-.259.827-.577v-2.168c-3.338.724-4.042-1.61-4.042-1.61-.546-1.39-1.334-1.762-1.334-1.762-1.091-.748.083-.733.083-.733 1.205.085 1.834 1.235 1.834 1.235 1.07 1.832 2.809 1.303 3.492.997.108-.775.418-1.303.763-1.602-2.664-.303-5.467-1.332-5.467-5.934 0-1.309.467-2.378 1.236-3.22-.124-.303-.536-1.526.117-3.177 0 0 1.003-.32 3.287 1.228a11.418 11.418 0 0 1 3.002-.404c1.02.005 2.048.137 3.002.404 2.287-1.549 3.287-1.228 3.287-1.228.653 1.651.242 2.874.118 3.177.77.842 1.236 1.91 1.236 3.22 0 4.612-2.806 5.632-5.478 5.927.43.371.818 1.105.818 2.23v3.293c0 .322.225.693.832.576C20.565 21.79 24 17.305 24 12 24 5.373 18.627 0 12 0z" />
+            </svg>
+          </a>
+          
+          </div>
+      </div>
+    </footer>
+
+
     </div>
+
+    
+
   );
 };
 

@@ -22,6 +22,7 @@ export const Edit = () => {
   const [loading2, setLoading2] = useState(false); // 자막 수정 로딩 상태 추가
   const [loading3, setLoading3] = useState(false); // 자막 번역 로딩 상태 추가
   const [audioUrl, setAudioUrl] = useState(null); // 오디오 파일 저장 상태 추가
+  const [dubbingloading, setdubbingloading] = useState('없음');
   const [selectedLanguagetwo, setSelectedLanguagetwo] = useState(''); // 선택한 언어 저장 상태 추가
   
 
@@ -67,7 +68,6 @@ export const Edit = () => {
     { value: "fr", label: "프랑스어" },
     { value: "de", label: "독일어" },
     { value: "ja", label: "일본어" },
-    { value: "zh", label: "중국어" },
   ];
 
   const languageOptionstwo = [
@@ -78,7 +78,6 @@ export const Edit = () => {
     { value: "fr", label: "프랑스어" },
     { value: "de", label: "독일어" },
     { value: "ja", label: "일본어" },
-    { value: "zh", label: "중국어" },
   ];
 
   const handleGenerate = async (event) => {
@@ -314,8 +313,10 @@ export const Edit = () => {
     const contentToRecommend = generatedData || caption; // generatedData가 없으면 caption 사용
   
     // 선택한 언어의 label 값을 찾기
-    const selectedLanguageLabel = languageOptionstwo.find(option => option.value === selectedLanguagetwo)?.label || '';
-  
+    //const selectedLanguageLabel = languageOptionstwo.find(option => option.value === selectedLanguagetwo)?.label || '';
+    
+    const selectedLanguageLabel = selectedLanguagetwo;
+
     try {
       const response = await axios.post('http://localhost:3000/work/llm-recommend', { 
         content: contentToRecommend,
@@ -323,10 +324,12 @@ export const Edit = () => {
       });
   
       const data = response.data;
+
+      console.log(data);
   
-      const title = data.제목 || ''; 
+      const title = data.title || ''; 
       const hashtags = Object.keys(data)
-        .filter(key => key.startsWith('해시태그')) 
+        .filter(key => key.startsWith('hashtag')) 
         .map(key => data[key].trim()); 
   
       setrecommendTitle(title);
@@ -390,25 +393,34 @@ export const Edit = () => {
 
   const handleDubbing = async () => {
     try {
+      // 더빙 생성 요청을 보내기 전 상태를 '생성 중'으로 설정
+      setdubbingloading('생성 중');
+  
       const formData = {
         content_projectID: projectId,
       };
-
+  
       console.log('생성 요청:', formData);
-
-      const response = await axios.post('http://localhost:3000/work/generateVCDubbing', formData, {
+  
+      // 더빙 파일 생성 API 요청
+      const response = await axios.post('http://localhost:3000/work/generateDubbing', formData, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
+  
       if (response.status === 200 || response.status === 201) {
         console.log('파일 생성 완료');
-        alert("더빙 파일 생성 완료");
+        // 더빙 파일 생성이 완료되었을 때 상태를 '생성 완료'로 설정
+        setdubbingloading('생성 완료');
       }
     } catch (error) {
       console.error('요청 중 에러 발생:', error.response?.data || error.message);
+      // 에러 발생 시에도 상태를 '없음'으로 설정
+      setdubbingloading('없음');
     }
   };
+  
   
 
   const handleWAV = async () => {
@@ -450,7 +462,7 @@ export const Edit = () => {
         window.URL.revokeObjectURL(downloadUrl);
   
         console.log('파일이 성공적으로 저장되었습니다.', response.data);
-        alert("더빙 파일 저장 완료!");
+        //alert("더빙 파일 저장 완료!");
       }
     } catch (error) {
       console.error('더빙 생성 오류:', error);
@@ -505,7 +517,7 @@ export const Edit = () => {
                 <div className="mt-7" />
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" size="sm" onClick={handlecancle}>취소</Button>
-                  <Button variant="solid" size="sm" onClick={handleSave}>저장</Button>
+                  {/* <Button variant="solid" size="sm" onClick={handleSave}>저장</Button> */}
                   <Button variant="solid" size="sm" onClick={handleUpload}>업로드</Button>
                 </div>
               </div>
@@ -614,13 +626,15 @@ export const Edit = () => {
                 </div>
               </div>
               <div className="grid gap-4">
-                <h3 className="text-lg font-semibold text-black">생성된 mp3 파일</h3>
+              <h3 className="text-lg font-semibold text-black">
+          {dubbingloading === '없음'
+            ? 'mp3 파일 없음'
+            : dubbingloading === '생성 중'
+            ? 'mp3 파일 생성 중'
+            : 'mp3 파일 생성 완료'}
+        </h3>
                 <div className="flex items-center justify-between mt-2">
-                  {audioUrl ? (
-                    <audio controls src={audioUrl} style={{ width: '70%' }} />
-                  ) : (
-                    <p>오디오 재생 바</p>
-                  )}
+                <audio controls src={audioUrl || ''} style={{ width: '70%' }} />
                   <Button variant="solid" size="sm" onClick={handleWAV}>다운</Button>
                 </div>
               </div>
@@ -628,6 +642,62 @@ export const Edit = () => {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+    <footer className="bg-gray-900 text-white py-6 px-6">
+      <div className="container mx-auto flex flex-col items-center space-y-8">
+        <div className="flex items-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mr-2 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M23.498 6.186a2.92 2.92 0 0 0-2.055-2.057C19.747 3.5 12 3.5 12 3.5s-7.747 0-9.443.629a2.92 2.92 0 0 0-2.055 2.057c-.586 3.303-.586 6.814-.586 6.814s0 3.511.586 6.814a2.92 2.92 0 0 0 2.055 2.057c1.696.629 9.443.629 9.443.629s7.747 0 9.443-.629a2.92 2.92 0 0 0 2.055-2.057c.586-3.303.586-6.814.586-6.814s0-3.511-.586-6.814ZM9.75 15.417V8.583L15.75 12 9.75 15.417Z" />
+          </svg>
+          <span className="text-sm cursor-pointer">YouTube SubHelper</span>
+        </div>
+        
+        <div className="grid grid-cols-4 gap-24">
+          {[
+            { name: '정준석', email: 'junseok@gmail.com' },
+            { name: '이재용', email: 'jaeyong@gmail.com' },
+            { name: '최원석', email: 'wonseok@gmail.com' },
+            { name: '김범서', email: 'beomseo@gmail.com' }
+          ].map(dev => (
+            <div key={dev.email} className="flex flex-col items-center">
+              <div className="text-sm font-bold">Developer</div>
+              <div className="text-sm font-bold">{dev.name}</div>
+              <div className="text-sm">{dev.email}</div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="flex items-center space-x-4 mt-4">
+          <div className="w-full border-b border-gray-600" />
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <a href="https://www.youtube.com/@%EA%B9%80%EB%B2%94%EC%84%9C-k5b" target="_blank" rel="noopener noreferrer" className="text-sm hover:underline">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5 mr-1"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M23.498 6.186a2.92 2.92 0 0 0-2.055-2.057C19.747 3.5 12 3.5 12 3.5s-7.747 0-9.443.629a2.92 2.92 0 0 0-2.055 2.057c-.586 3.303-.586 6.814-.586 6.814s0 3.511.586 6.814a2.92 2.92 0 0 0 2.055 2.057c1.696.629 9.443.629 9.443.629s7.747 0 9.443-.629a2.92 2.92 0 0 0 2.055-2.057c.586-3.303.586-6.814.586-6.814s0-3.511-.586-6.814ZM9.75 15.417V8.583L15.75 12 9.75 15.417Z" />
+            </svg>
+          </a>
+          <a href="https://github.com/captive-design-2024" target="_blank" rel="noopener noreferrer" className="text-sm hover:underline">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5 mr-1"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 5.304 3.438 9.79 8.207 11.388.6.112.827-.259.827-.577v-2.168c-3.338.724-4.042-1.61-4.042-1.61-.546-1.39-1.334-1.762-1.334-1.762-1.091-.748.083-.733.083-.733 1.205.085 1.834 1.235 1.834 1.235 1.07 1.832 2.809 1.303 3.492.997.108-.775.418-1.303.763-1.602-2.664-.303-5.467-1.332-5.467-5.934 0-1.309.467-2.378 1.236-3.22-.124-.303-.536-1.526.117-3.177 0 0 1.003-.32 3.287 1.228a11.418 11.418 0 0 1 3.002-.404c1.02.005 2.048.137 3.002.404 2.287-1.549 3.287-1.228 3.287-1.228.653 1.651.242 2.874.118 3.177.77.842 1.236 1.91 1.236 3.22 0 4.612-2.806 5.632-5.478 5.927.43.371.818 1.105.818 2.23v3.293c0 .322.225.693.832.576C20.565 21.79 24 17.305 24 12 24 5.373 18.627 0 12 0z" />
+            </svg>
+          </a>
+          
+          </div>
+      </div>
+    </footer>
+
     </div>
   );
 };
