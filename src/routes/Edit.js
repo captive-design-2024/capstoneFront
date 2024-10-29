@@ -28,6 +28,7 @@ export const Edit = () => {
 
   const [modelOptions, ] = useState([ // 모델 선택 옵션 상태 추가
     { value: "", label: "모델 선택", disabled: true },
+    { value: "ab", label: "기본"},
     { value: "en", label: "준석" },
     { value: "es", label: "슈카월드" },
   ]);
@@ -401,10 +402,26 @@ export const Edit = () => {
         content_projectID: projectId,
       };
   
-      console.log('생성 요청:', formData);
+      // 모델 선택에 따라 다른 엔드포인트 설정
+    let endpoint = '';
+    if (selectedModel === 'ab') {
+      endpoint = 'http://localhost:3000/work/generateDubbing';
+    } else if (selectedModel === 'en') {
+      endpoint = 'http://localhost:3000/work/generateVCDubbing';
+    } else if (selectedModel === 'es') {
+      endpoint = 'http://localhost:3000/work/generateOtherDubbing';
+    } else {
+      console.error('선택한 모델에 대한 엔드포인트가 없습니다.');
+      setdubbingloading('없음');
+      return;
+    }
+
+
+      console.log('요청을 보내는 주소:', endpoint);
+     
   
       // 더빙 파일 생성 API 요청
-      const response = await axios.post('http://localhost:3000/work/generateDubbing', formData, {
+      const response = await axios.post(endpoint, formData, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -421,6 +438,7 @@ export const Edit = () => {
       setdubbingloading('없음');
     }
   };
+  
   
   
 
