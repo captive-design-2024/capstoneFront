@@ -27,7 +27,7 @@ export const Edit = () => {
 
   const [modelOptions, ] = useState([ // 모델 선택 옵션 상태 추가
     { value: "", label: "모델 선택", disabled: true },
-    { value: "en", label: "침착맨" },
+    { value: "en", label: "준석" },
     { value: "es", label: "슈카월드" },
   ]);
 
@@ -396,13 +396,14 @@ export const Edit = () => {
 
       console.log('생성 요청:', formData);
 
-      const response = await axios.post('http://localhost:3000/work/generateDubbing', formData, {
+      const response = await axios.post('http://localhost:3000/work/generateVCDubbing', formData, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
       if (response.status === 200 || response.status === 201) {
         console.log('파일 생성 완료');
+        alert("더빙 파일 생성 완료");
       }
     } catch (error) {
       console.error('요청 중 에러 발생:', error.response?.data || error.message);
@@ -449,6 +450,7 @@ export const Edit = () => {
         window.URL.revokeObjectURL(downloadUrl);
   
         console.log('파일이 성공적으로 저장되었습니다.', response.data);
+        alert("더빙 파일 저장 완료!");
       }
     } catch (error) {
       console.error('더빙 생성 오류:', error);
