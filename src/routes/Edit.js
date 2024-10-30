@@ -24,7 +24,6 @@ export const Edit = () => {
   const [audioUrl, setAudioUrl] = useState(null); // 오디오 파일 저장 상태 추가
   const [dubbingloading, setdubbingloading] = useState('없음');
   const [selectedLanguagetwo, setSelectedLanguagetwo] = useState(''); // 선택한 언어 저장 상태 추가
-  
 
   const [modelOptions, ] = useState([ // 모델 선택 옵션 상태 추가
     { value: "", label: "모델 선택", disabled: true },
@@ -384,6 +383,35 @@ export const Edit = () => {
     }
   };
 
+  const handleLoad = async () => {
+    const contentToTranslate = generatedData || caption; // generatedData가 없으면 caption 사용
+
+    console.log('서버 요청:', contentToTranslate);
+
+    console.log('llm_translate 호출:', {
+      content_projectID: projectId,
+      content_language: selectedLanguage,
+      content: contentToTranslate
+    });
+
+    try {
+      //setLoading3(true); // '자막 수정 중...' 상태 설정
+      const transresponse = await axios.post(`http://localhost:3000/files/readSRT`, {
+        content_projectID: projectId,
+        content_language: selectedLanguage
+      });
+      settranslation(transresponse.data); // 서버 응답 데이터를 checkedData에 저장
+
+    } catch (error) {
+      console.error('번역 요청 에러 발생:', error.response?.data || error.message);
+      alert("번역 파일이 없습니다!");
+    } finally {
+      //setLoading3(false); // 로딩 상태 해제
+    }
+  };
+
+
+
   //임시 미사용
   /*const handleAddModel = () => { // 모델 추가 핸들러 추가
     if (modelName) {
@@ -573,16 +601,24 @@ export const Edit = () => {
                     style={{ backgroundColor: '#808080', color: 'white' }}
                   />
                   <Button variant="outline" size="sm" onClick={handleTranslation}>번역</Button>
+                  <Button variant="solid" size="sm" onClick={handleLoad}>불러오기</Button>
+               
                 </div>
               </div>
               <div className="grid gap-4">
                 <div>
                   <Label htmlFor="translation">번역 자막</Label>
                   <Textarea
-                    id="translation"
-                    rows={5}
-                    defaultValue={loading3 ? '자막 번역 중…' : translation}
-                  />
+                      id="translation"
+                      rows={5}
+                      defaultValue={loading3 ? '자막 번역 중…' : translation}
+                      
+                    />
+                    {/* <Textarea
+                      id="load"
+                      rows={5}
+                      defaultValue={loading4 ? '자막 불러오는 중…' : loadData}
+                    /> */}
                 </div>
                 <div className="mt-1" />
                 <div className="flex justify-end space-x-2">
@@ -666,4 +702,5 @@ export const Edit = () => {
 };
 
 export default Edit;
+
 

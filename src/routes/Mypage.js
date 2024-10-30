@@ -199,6 +199,14 @@ export const Mypage = () => {
       <header className="bg-white text-gray-900 py-4 px-6 flex justify-between items-center">
         <h2 className="text-xl font-bold">마이페이지</h2>
         <div className="flex space-x-2">
+         <Button 
+            variant="outline" 
+            className="hover:bg-gray-200" 
+            onClick={() => setShowModal(true)}
+          >
+            + 자막 추가
+          </Button>
+
           <Button 
             variant="outline" 
             className="hover:bg-gray-200" 
@@ -207,13 +215,7 @@ export const Mypage = () => {
             + 모델 추가
           </Button>
 
-          <Button 
-            variant="outline" 
-            className="hover:bg-gray-200" 
-            onClick={() => setShowModal(true)}
-          >
-            + 자막 추가
-          </Button>
+          
         </div>
       </header>
 
@@ -357,3 +359,4 @@ export const Mypage = () => {
 };
 
 export default Mypage;
+
